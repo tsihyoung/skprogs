@@ -123,11 +123,11 @@ class SkgenAtomCalculation:
             return
 
         hubbus = self._calculate_hubbus(result_spinavg_atom,
-                                        replace_empty_with_homo=True)
+                                        replace_empty_with_homo=False)
         self._log_substitutions(result_spinavg_atom)
         self._log_hubbus(hubbus)
         spinws = self._calculate_spinws(result_spinavg_atom,
-                                        replace_empty_with_homo=True)
+                                        replace_empty_with_homo=False)
         self._log_spinws(spinws)
         self._convert_results(result_spinavg_atom, result_spin_atom, hubbus,
                               spinws)
