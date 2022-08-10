@@ -144,29 +144,23 @@ contains
     do ii=0,max_l
 ! Sum over all eigenvectors
     do jj=1,num_alpha(ii)*poly_order(ii)
-      oo=0
       dummy1=0.0d0
       dummy2=0.0d0
 ! sum over all basis functions in alpha and polynomial, i.e. prim. Slaters
-      do kk=1,num_alpha(ii)
-        do ll=1,poly_order(ii)
-          oo=oo+1
-          pp=0
+      !$OMP PARALLEL DO PRIVATE(oo, pp) REDUCTION(+: dummy1, dummy2)
+      do oo=1,num_alpha(ii)*poly_order(ii)
 ! other sum over all basis functions in alpha and polynomial, i.e. prim. Slaters
-          do mm=1,num_alpha(ii)
-            do nn=1,poly_order(ii)
-              pp=pp+1
+        do pp = 1,num_alpha(ii)*poly_order(ii)
 ! occupation numbers do not enter here
-              dummy1=dummy1+cof(1,ii,pp,jj)*cof(1,ii,oo,jj)*&
-                     &tsol2*(zscale(1,ii,oo,pp)+&
-                     &0.5d0*(zscale2(1,ii,oo,pp)+t(ii,oo,pp)))
-              dummy2=dummy2+cof(2,ii,pp,jj)*cof(2,ii,oo,jj)*&
-                     &tsol2*(zscale(2,ii,oo,pp)+&
-                     &0.5d0*(zscale2(2,ii,oo,pp)+t(ii,oo,pp)))
-            end do
-          end do
+          dummy1=dummy1+cof(1,ii,pp,jj)*cof(1,ii,oo,jj)*&
+                 &tsol2*(zscale(1,ii,oo,pp)+&
+                 &0.5d0*(zscale2(1,ii,oo,pp)+t(ii,oo,pp)))
+          dummy2=dummy2+cof(2,ii,pp,jj)*cof(2,ii,oo,jj)*&
+                 &tsol2*(zscale(2,ii,oo,pp)+&
+                 &0.5d0*(zscale2(2,ii,oo,pp)+t(ii,oo,pp)))
         end do
       end do
+      !$OMP END PARALLEL DO
 
 
 
@@ -183,34 +177,28 @@ contains
     do ii=0,max_l
 ! Sum over all eigenvectors
     do jj=1,num_alpha(ii)*poly_order(ii)
-      oo=0
 ! sum over all basis functions in alpha and polynomial, i.e. prim. Slaters
-      do kk=1,num_alpha(ii)
-        do ll=1,poly_order(ii)
-          oo=oo+1
-          pp=0
+      !$OMP PARALLEL DO PRIVATE(oo, pp) REDUCTION(+: zora_ekin1, zora_ekin2)
+      do oo=1,num_alpha(ii)*poly_order(ii)
 ! other sum over all basis functions in alpha and polynomial, i.e. prim. Slaters
-          do mm=1,num_alpha(ii)
-            do nn=1,poly_order(ii)
-              pp=pp+1
+        do pp=1,num_alpha(ii)*poly_order(ii)
 ! dummy contains the non-relativistic kinetic energy operator applied
 ! to the relativistic ZORA wavefunction, debug only
-!              dummy1=dummy1+occ(1,ii,jj)*cof(1,ii,pp,jj)*cof(1,ii,oo,jj)*t(ii,oo,pp)
-!              dummy2=dummy2+occ(2,ii,jj)*cof(2,ii,pp,jj)*cof(2,ii,oo,jj)*t(ii,oo,pp)
-              zora_ekin1=zora_ekin1+&
-                &occ(1,ii,jj)*cof(1,ii,pp,jj)*cof(1,ii,oo,jj)*&
-                &(t(ii,oo,pp)+zscale(1,ii,oo,pp)-&
-                &eigval_scaled(1,ii,jj)*tsol2*(0.5d0*(&
-                &zscale2(1,ii,oo,pp)+t(ii,oo,pp))+zscale(1,ii,oo,pp)))
-              zora_ekin2=zora_ekin2+&
-                &occ(2,ii,jj)*cof(2,ii,pp,jj)*cof(2,ii,oo,jj)*&
-                &(t(ii,oo,pp)+zscale(2,ii,oo,pp)-&
-                &eigval_scaled(2,ii,jj)*tsol2*(0.5d0*(&
-                &zscale2(2,ii,oo,pp)+t(ii,oo,pp))+zscale(2,ii,oo,pp)))
-            end do
-          end do
+!         dummy1=dummy1+occ(1,ii,jj)*cof(1,ii,pp,jj)*cof(1,ii,oo,jj)*t(ii,oo,pp)
+!         dummy2=dummy2+occ(2,ii,jj)*cof(2,ii,pp,jj)*cof(2,ii,oo,jj)*t(ii,oo,pp)
+         zora_ekin1=zora_ekin1+&
+           &occ(1,ii,jj)*cof(1,ii,pp,jj)*cof(1,ii,oo,jj)*&
+           &(t(ii,oo,pp)+zscale(1,ii,oo,pp)-&
+           &eigval_scaled(1,ii,jj)*tsol2*(0.5d0*(&
+           &zscale2(1,ii,oo,pp)+t(ii,oo,pp))+zscale(1,ii,oo,pp)))
+         zora_ekin2=zora_ekin2+&
+           &occ(2,ii,jj)*cof(2,ii,pp,jj)*cof(2,ii,oo,jj)*&
+           &(t(ii,oo,pp)+zscale(2,ii,oo,pp)-&
+           &eigval_scaled(2,ii,jj)*tsol2*(0.5d0*(&
+           &zscale2(2,ii,oo,pp)+t(ii,oo,pp))+zscale(2,ii,oo,pp)))
         end do
       end do
+      !$OMP END PARALLEL DO
     end do  
     end do
 !    write(*,*) 'SCAL2 ',dummy1,dummy2,zora_ekin1,zora_ekin2
