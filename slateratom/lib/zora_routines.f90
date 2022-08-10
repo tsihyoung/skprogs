@@ -237,12 +237,14 @@ contains
 
     kinetic_part_1=0.0d0
 
+    !$OMP PARALLEL DO PRIVATE(ii) REDUCTION(+: kinetic_part_1)
     do ii=1,num_mesh_points
 
       kinetic_part_1=kinetic_part_1+weight(ii)*kappa(ii)*&
           &basis_1st_times_basis_1st_times_r2(alpha1,poly1,alpha2,poly2,l,abcissa(ii))
 
     end do
+    !$OMP END PARALLEL DO
 
     kinetic_part_1=kinetic_part_1*0.5d0
 
@@ -263,12 +265,14 @@ contains
 
     kinetic_part_2=0.0d0
 
+    !$OMP PARALLEL DO PRIVATE(ii) REDUCTION(+: kinetic_part_2)
     do ii=1,num_mesh_points
 
       kinetic_part_2=kinetic_part_2+weight(ii)*kappa(ii)*&
           &basis_times_basis(alpha1,poly1,alpha2,poly2,l,abcissa(ii))
 
     end do
+    !$OMP END PARALLEL DO
 
     kinetic_part_2=kinetic_part_2*0.5d0
 
@@ -286,6 +290,7 @@ contains
 
     real(dp), parameter :: tsol2 =2.0_dp*cc**2
 
+    !$OMP PARALLEL DO PRIVATE(ii)
     do ii=1,num_mesh_points
 
       kappa(1,ii)=vtot(1,ii)/(tsol2-vtot(1,ii))
@@ -295,6 +300,7 @@ contains
       kappa2(2,ii)=kappa(2,ii)**2
 
     end do
+    !$OMP END PARALLEL DO
 
   end subroutine kappa_to_mesh
 
@@ -323,12 +329,14 @@ contains
     call cou_pot(ptot(:,:,:),max_l,num_alpha,poly_order,alpha,problemsize,&
         &num_mesh_points,abcissa,cpot)
 
+    !$OMP PARALLEL DO PRIVATE(ii)
     do ii=1,num_mesh_points
 
       vtot(1,ii)=-real(nuc,dp)/abcissa(ii)+cpot(ii)+vxc(ii,1)
       vtot(2,ii)=-real(nuc,dp)/abcissa(ii)+cpot(ii)+vxc(ii,2)
 
     end do
+    !$OMP END PARALLEL DO
 
     deallocate(cpot)
     deallocate(ptot)

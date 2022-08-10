@@ -137,11 +137,13 @@ contains
 
     ! divide by 4*pi to catch different normalization of spherical harmonics
     if (xcnr==1) then
+      !$OMP PARALLEL DO PRIVATE(ii, rhotot, rhodiff)
       do ii = 1, num_mesh_points
         rhotot = (rho(ii,1) + rho(ii,2)) * rec4pi
         rhodiff = (rho(ii,1) - rho(ii,2)) * rec4pi
         call xalpha(rhotot,rhodiff,vxc(ii,:),exc(ii),xalpha_const)
       end do
+      !$OMP END PARALLEL DO
 
     else if (xcnr==2) then
       nn = size(rho, dim=1)
@@ -714,12 +716,14 @@ contains
       do jj=1,num_alpha(ii)
         do kk=1,poly_order(ii)
           value=0.0d0
+          !$OMP PARALLEL DO PRIVATE(ll) REDUCTION(+: value)
           do ll=1,num_mesh_points
 
             value=value+weight(ll)*abcissa(ll)**2*&
                 &basis(alpha(ii,jj),kk,ii,abcissa(ll))**2
 
           end do
+          !$OMP END PARALLEL DO
           if (abs(1.0d0-value)>1.0d-12) then
             write(*,'(A,F12.6,I3,E12.3)') 'WARNING: Integration bad for basis &
                 &function ',alpha(ii,jj),kk+ii-1,abs(1.0d0-value)
