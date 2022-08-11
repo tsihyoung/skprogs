@@ -66,8 +66,12 @@ contains
               !            write(*,'(I2,I2,I2,I2,I2,I2,I2)') ii,jj,ll,kk,mm,nn,oo
               !
               ! use ll+ii and mm+ii becaue of DFTB basis function definition
-              s(ii,nn,oo)=1.0d0/sqrt(v(alpha(ii,jj),2*nlp)*&
-                  &v(alpha(ii,kk),2*nlq))*v(alpha1,nlp+nlq)
+              if (nn <= oo) then
+                s(ii,nn,oo)=1.0d0/sqrt(v(alpha(ii,jj),2*nlp)*&
+                    &v(alpha(ii,kk),2*nlq))*v(alpha1,nlp+nlq)
+              else
+                s(ii,nn,oo) = s(ii,oo,nn)
+              end if
             end do
           end do
         end do
@@ -106,8 +110,12 @@ contains
             do mm=1,poly_order(ii)
               oo=oo+1
               nlq=mm+ii
-              u(ii,nn,oo)=2.0d0/sqrt(v(alpha(ii,jj),2*nlp)*&
-                  &v(alpha(ii,kk),2*nlq))*v(alpha1,nlp+nlq-1)
+              if (nn <= oo) then
+                u(ii,nn,oo)=2.0d0/sqrt(v(alpha(ii,jj),2*nlp)*&
+                    &v(alpha(ii,kk),2*nlq))*v(alpha1,nlp+nlq-1)
+              else
+                u(ii,nn,oo) = u(ii,oo,nn)
+              end if
             end do
           end do
         end do
@@ -220,14 +228,18 @@ contains
             do mm=1,poly_order(ii)
               oo=oo+1
               nlq=mm+ii
-              t(ii,nn,oo)=0.5d0*alpha(ii,jj)*alpha(ii,kk)/&
-                  &sqrt(v(alpha(ii,jj),2*nlp)*v(alpha(ii,kk),2*nlq))*&
-                  &(v(alpha1,nlp+nlq)-&
-                  &(w(alpha(ii,jj),ii,nlp)+w(alpha(ii,kk),ii,nlq))*&
-                  &v(alpha1,nlp+nlq-1)+&
-                  &(w(alpha(ii,jj),ii,nlp)*w(alpha(ii,kk),ii,nlq))*&
-                  &v(alpha1,nlp+nlq-2)&
-                  &)
+              if (nn <= oo) then
+                t(ii,nn,oo)=0.5d0*alpha(ii,jj)*alpha(ii,kk)/&
+                    &sqrt(v(alpha(ii,jj),2*nlp)*v(alpha(ii,kk),2*nlq))*&
+                    &(v(alpha1,nlp+nlq)-&
+                    &(w(alpha(ii,jj),ii,nlp)+w(alpha(ii,kk),ii,nlq))*&
+                    &v(alpha1,nlp+nlq-1)+&
+                    &(w(alpha(ii,jj),ii,nlp)*w(alpha(ii,kk),ii,nlq))*&
+                    &v(alpha1,nlp+nlq-2)&
+                    &)
+              else
+                t(ii,nn,oo) = t(ii,oo,nn)
+              end if
             end do
           end do
         end do
@@ -269,9 +281,13 @@ contains
               do mm=1,poly_order(ii)
                 oo=oo+1
                 nlq=mm+ii
-                vconf(ii,nn,oo)=1.0d0/sqrt(v(alpha(ii,jj),2*nlp)*&
-                    &v(alpha(ii,kk),2*nlq))/(conf_r0(ii)*2.0d0)**conf_power(ii)*&
-                    &v(alpha1,nlp+nlq+conf_power(ii))
+                if (nn <= oo) then
+                  vconf(ii,nn,oo)=1.0d0/sqrt(v(alpha(ii,jj),2*nlp)*&
+                      &v(alpha(ii,kk),2*nlq))/(conf_r0(ii)*2.0d0)**conf_power(ii)*&
+                      &v(alpha1,nlp+nlq+conf_power(ii))
+                else
+                  vconf(ii,nn,oo) = vconf(ii,oo,nn)
+                end if
               end do
             end do
           end do
@@ -317,13 +333,18 @@ contains
                   oo=oo+1
                   nlq=mm+ii
 
-                  moment(1,ii,pp)=moment(1,ii,pp)+1.0d0/sqrt(v(alpha(ii,jj),2*nlp)*&
-                      &v(alpha(ii,kk),2*nlq))/(2.0d0**power)*&
-                      &v(alpha1,nlp+nlq+power)*cof(1,ii,nn,pp)*cof(1,ii,oo,pp)
-
-                  moment(2,ii,pp)=moment(2,ii,pp)+1.0d0/sqrt(v(alpha(ii,jj),2*nlp)*&
-                      &v(alpha(ii,kk),2*nlq))/(2.0d0**power)*&
-                      &v(alpha1,nlp+nlq+power)*cof(2,ii,nn,pp)*cof(2,ii,oo,pp)
+                  if (ii <= pp) then
+                    moment(1,ii,pp)=moment(1,ii,pp)+1.0d0/sqrt(v(alpha(ii,jj),2*nlp)*&
+                        &v(alpha(ii,kk),2*nlq))/(2.0d0**power)*&
+                        &v(alpha1,nlp+nlq+power)*cof(1,ii,nn,pp)*cof(1,ii,oo,pp)
+  
+                    moment(2,ii,pp)=moment(2,ii,pp)+1.0d0/sqrt(v(alpha(ii,jj),2*nlp)*&
+                        &v(alpha(ii,kk),2*nlq))/(2.0d0**power)*&
+                        &v(alpha1,nlp+nlq+power)*cof(2,ii,nn,pp)*cof(2,ii,oo,pp)
+                  else
+                    moment(1,ii,pp) = moment(1,pp,ii)
+                    moment(2,ii,pp) = moment(2,pp,ii)
+                  end if
 
                 end do
               end do
@@ -346,13 +367,18 @@ contains
                   oo=oo+1
                   nlq=mm+ii
 
-                  moment(1,ii,pp)=moment(1,ii,pp)+1.0d0/sqrt(v(alpha(ii,jj),2*nlp)*&
-                      &v(alpha(ii,kk),2*nlq))/(2.0d0**power)*&
-                      &v(alpha1,nlp+nlq+power)*cof(1,ii,nn,pp)*cof(1,ii,oo,pp)
-
-                  moment(2,ii,pp)=moment(2,ii,pp)+1.0d0/sqrt(v(alpha(ii,jj),2*nlp)*&
-                      &v(alpha(ii,kk),2*nlq))/(2.0d0**power)*&
-                      &v(alpha1,nlp+nlq+power)*cof(2,ii,nn,pp)*cof(2,ii,oo,pp)
+                  if (ii <= pp) then
+                    moment(1,ii,pp)=moment(1,ii,pp)+1.0d0/sqrt(v(alpha(ii,jj),2*nlp)*&
+                        &v(alpha(ii,kk),2*nlq))/(2.0d0**power)*&
+                        &v(alpha1,nlp+nlq+power)*cof(1,ii,nn,pp)*cof(1,ii,oo,pp)
+  
+                    moment(2,ii,pp)=moment(2,ii,pp)+1.0d0/sqrt(v(alpha(ii,jj),2*nlp)*&
+                        &v(alpha(ii,kk),2*nlq))/(2.0d0**power)*&
+                        &v(alpha1,nlp+nlq+power)*cof(2,ii,nn,pp)*cof(2,ii,oo,pp)
+                  else
+                    moment(1,ii,pp) = moment(1,pp,ii)
+                    moment(2,ii,pp) = moment(2,pp,ii)
+                  end if
 
                 end do
               end do

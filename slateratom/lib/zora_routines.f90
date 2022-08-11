@@ -152,12 +152,21 @@ contains
 ! other sum over all basis functions in alpha and polynomial, i.e. prim. Slaters
         do pp = 1,num_alpha(ii)*poly_order(ii)
 ! occupation numbers do not enter here
-          dummy1=dummy1+cof(1,ii,pp,jj)*cof(1,ii,oo,jj)*&
-                 &tsol2*(zscale(1,ii,oo,pp)+&
-                 &0.5d0*(zscale2(1,ii,oo,pp)+t(ii,oo,pp)))
-          dummy2=dummy2+cof(2,ii,pp,jj)*cof(2,ii,oo,jj)*&
-                 &tsol2*(zscale(2,ii,oo,pp)+&
-                 &0.5d0*(zscale2(2,ii,oo,pp)+t(ii,oo,pp)))
+          if (oo < pp) then
+            dummy1=dummy1+2d0*cof(1,ii,pp,jj)*cof(1,ii,oo,jj)*&
+                  &tsol2*(zscale(1,ii,oo,pp)+&
+                  &0.5d0*(zscale2(1,ii,oo,pp)+t(ii,oo,pp)))
+            dummy2=dummy2+2d0*cof(2,ii,pp,jj)*cof(2,ii,oo,jj)*&
+                  &tsol2*(zscale(2,ii,oo,pp)+&
+                  &0.5d0*(zscale2(2,ii,oo,pp)+t(ii,oo,pp)))
+          else if (oo == pp) then
+            dummy1=dummy1+cof(1,ii,pp,jj)*cof(1,ii,oo,jj)*&
+                  &tsol2*(zscale(1,ii,oo,pp)+&
+                  &0.5d0*(zscale2(1,ii,oo,pp)+t(ii,oo,pp)))
+            dummy2=dummy2+cof(2,ii,pp,jj)*cof(2,ii,oo,jj)*&
+                  &tsol2*(zscale(2,ii,oo,pp)+&
+                  &0.5d0*(zscale2(2,ii,oo,pp)+t(ii,oo,pp)))
+          end if
         end do
       end do
       !$OMP END PARALLEL DO
@@ -186,16 +195,29 @@ contains
 ! to the relativistic ZORA wavefunction, debug only
 !         dummy1=dummy1+occ(1,ii,jj)*cof(1,ii,pp,jj)*cof(1,ii,oo,jj)*t(ii,oo,pp)
 !         dummy2=dummy2+occ(2,ii,jj)*cof(2,ii,pp,jj)*cof(2,ii,oo,jj)*t(ii,oo,pp)
-         zora_ekin1=zora_ekin1+&
-           &occ(1,ii,jj)*cof(1,ii,pp,jj)*cof(1,ii,oo,jj)*&
-           &(t(ii,oo,pp)+zscale(1,ii,oo,pp)-&
-           &eigval_scaled(1,ii,jj)*tsol2*(0.5d0*(&
-           &zscale2(1,ii,oo,pp)+t(ii,oo,pp))+zscale(1,ii,oo,pp)))
-         zora_ekin2=zora_ekin2+&
-           &occ(2,ii,jj)*cof(2,ii,pp,jj)*cof(2,ii,oo,jj)*&
-           &(t(ii,oo,pp)+zscale(2,ii,oo,pp)-&
-           &eigval_scaled(2,ii,jj)*tsol2*(0.5d0*(&
-           &zscale2(2,ii,oo,pp)+t(ii,oo,pp))+zscale(2,ii,oo,pp)))
+          if (oo < pp) then
+            zora_ekin1=zora_ekin1+2d0*&
+              &occ(1,ii,jj)*cof(1,ii,pp,jj)*cof(1,ii,oo,jj)*&
+              &(t(ii,oo,pp)+zscale(1,ii,oo,pp)-&
+              &eigval_scaled(1,ii,jj)*tsol2*(0.5d0*(&
+              &zscale2(1,ii,oo,pp)+t(ii,oo,pp))+zscale(1,ii,oo,pp)))
+            zora_ekin2=zora_ekin2+2d0*&
+              &occ(2,ii,jj)*cof(2,ii,pp,jj)*cof(2,ii,oo,jj)*&
+              &(t(ii,oo,pp)+zscale(2,ii,oo,pp)-&
+              &eigval_scaled(2,ii,jj)*tsol2*(0.5d0*(&
+              &zscale2(2,ii,oo,pp)+t(ii,oo,pp))+zscale(2,ii,oo,pp)))
+          else if (oo == pp) then
+            zora_ekin1=zora_ekin1+&
+              &occ(1,ii,jj)*cof(1,ii,pp,jj)*cof(1,ii,oo,jj)*&
+              &(t(ii,oo,pp)+zscale(1,ii,oo,pp)-&
+              &eigval_scaled(1,ii,jj)*tsol2*(0.5d0*(&
+              &zscale2(1,ii,oo,pp)+t(ii,oo,pp))+zscale(1,ii,oo,pp)))
+            zora_ekin2=zora_ekin2+&
+              &occ(2,ii,jj)*cof(2,ii,pp,jj)*cof(2,ii,oo,jj)*&
+              &(t(ii,oo,pp)+zscale(2,ii,oo,pp)-&
+              &eigval_scaled(2,ii,jj)*tsol2*(0.5d0*(&
+              &zscale2(2,ii,oo,pp)+t(ii,oo,pp))+zscale(2,ii,oo,pp)))
+          end if
         end do
       end do
       !$OMP END PARALLEL DO
