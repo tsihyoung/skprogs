@@ -35,7 +35,11 @@ contains
 
     b= (0.69395656d0/real(nuc,dp))**(1.0d0/3.0d0)
 
+#ifdef _OPENACC
+    !$ACC KERNELS
+#else
     !$OMP PARALLEL DO PRIVATE(ii,x,rtx,t)
+#endif
     do ii=1,num_mesh_points
 
       x= abcissa(ii)/b
@@ -49,7 +53,11 @@ contains
       vxc(ii,2)= (t/abcissa(ii))/2.0d0
 
     end do
+#ifdef _OPENACC
+    !$ACC END KERNELS
+#else
     !$OMP END PARALLEL DO
+#endif
 
   end subroutine dft_start_pot
 
@@ -239,14 +247,22 @@ contains
 
     exc_energy=0.0d0
 
+#ifdef _OPENACC
+    !$ACC KERNELS
+#else
     !$OMP PARALLEL DO PRIVATE(ii) REDUCTION(+: exc_energy)
+#endif
     do ii=1,num_mesh_points
 
       exc_energy=exc_energy+weight(ii)*exc(ii)*(rho(ii,1)+rho(ii,2))*&
           &abcissa(ii)**2
 
     end do
+#ifdef _OPENACC
+    !$ACC END KERNELS
+#else
     !$OMP END PARALLEL DO
+#endif
 
     !
     ! For usual DFT functionals E_xc=\int \rho \eps(\rho,\zeta) d^3r
@@ -268,7 +284,11 @@ contains
 
     vxc_energy=0.0d0
 
+#ifdef _OPENACC
+    !$ACC KERNELS
+#else
     !$OMP PARALLEL DO PRIVATE(ii) REDUCTION(+: vxc_energy)
+#endif
     do ii=1,num_mesh_points
 
       vxc_energy(1)=vxc_energy(1)+weight(ii)*vxc(ii,1)*(rho(ii,1))*&
@@ -277,7 +297,11 @@ contains
           &abcissa(ii)**2
 
     end do
+#ifdef _OPENACC
+    !$ACC END KERNELS
+#else
     !$OMP END PARALLEL DO
+#endif
 
 
   end subroutine dft_vxc_energy

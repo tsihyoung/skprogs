@@ -141,15 +141,23 @@ contains
 ! First get scaled eigenvalues
 
 ! Sum over all angular momenta
+#ifdef _OPENACC
+    !$ACC DATA COPYIN(num_alpha, poly_order, cof, zscale, zscale2, t)
+#endif
     do ii=0,max_l
 ! Sum over all eigenvectors
     do jj=1,num_alpha(ii)*poly_order(ii)
       dummy1=0.0d0
       dummy2=0.0d0
 ! sum over all basis functions in alpha and polynomial, i.e. prim. Slaters
+#ifndef _OPENACC
       !$OMP PARALLEL DO PRIVATE(oo, pp) REDUCTION(+: dummy1, dummy2)
+#endif
       do oo=1,num_alpha(ii)*poly_order(ii)
 ! other sum over all basis functions in alpha and polynomial, i.e. prim. Slaters
+#ifdef _OPENACC
+        !$ACC KERNELS
+#endif
         do pp = 1,num_alpha(ii)*poly_order(ii)
 ! occupation numbers do not enter here
           if (oo < pp) then
@@ -168,8 +176,13 @@ contains
                   &0.5d0*(zscale2(2,ii,oo,pp)+t(ii,oo,pp)))
           end if
         end do
+#ifdef _OPENACC
+        !$ACC END KERNELS
+#endif
       end do
+#ifndef _OPENACC
       !$OMP END PARALLEL DO
+#endif
 
 
 
@@ -177,19 +190,30 @@ contains
       eigval_scaled(2,ii,jj)=eigval(2,ii,jj)/(1.0d0+dummy2)
     end do  
     end do
+#ifdef _OPENACC
+    !$ACC END DATA
+#endif
 
 ! Now ZORA kinetic energy
 
-      dummy1=0.0d0
-      dummy2=0.0d0
+    ! dummy1=0.0d0
+    ! dummy2=0.0d0
 ! Sum over all angular momenta
+#ifdef _OPENACC
+    !$ACC DATA COPYIN(num_alpha, poly_order, occ, cof, zscale, zscale2, t)
+#endif
     do ii=0,max_l
 ! Sum over all eigenvectors
     do jj=1,num_alpha(ii)*poly_order(ii)
 ! sum over all basis functions in alpha and polynomial, i.e. prim. Slaters
+#ifndef _OPENACC
       !$OMP PARALLEL DO PRIVATE(oo, pp) REDUCTION(+: zora_ekin1, zora_ekin2)
+#endif
       do oo=1,num_alpha(ii)*poly_order(ii)
 ! other sum over all basis functions in alpha and polynomial, i.e. prim. Slaters
+#ifdef _OPENACC
+        !$ACC KERNELS
+#endif
         do pp=1,num_alpha(ii)*poly_order(ii)
 ! dummy contains the non-relativistic kinetic energy operator applied
 ! to the relativistic ZORA wavefunction, debug only
@@ -219,10 +243,18 @@ contains
               &zscale2(2,ii,oo,pp)+t(ii,oo,pp))+zscale(2,ii,oo,pp)))
           end if
         end do
+#ifdef _OPENACC
+        !$ACC END KERNELS
+#endif
       end do
+#ifndef _OPENACC
       !$OMP END PARALLEL DO
+#endif
     end do  
     end do
+#ifdef _OPENACC
+    !$ACC END DATA
+#endif
 !    write(*,*) 'SCAL2 ',dummy1,dummy2,zora_ekin1,zora_ekin2
 
     zora_ekin=zora_ekin1+zora_ekin2
@@ -300,7 +332,11 @@ contains
 
     real(dp), parameter :: tsol2 =2.0_dp*cc**2
 
+#ifdef _OPENACC
+    !$ACC KERNELS
+#else
     !$OMP PARALLEL DO PRIVATE(ii)
+#endif
     do ii=1,num_mesh_points
 
       kappa(1,ii)=vtot(1,ii)/(tsol2-vtot(1,ii))
@@ -310,7 +346,11 @@ contains
       kappa2(2,ii)=kappa(2,ii)**2
 
     end do
+#ifdef _OPENACC
+    !$ACC END KERNELS
+#else
     !$OMP END PARALLEL DO
+#endif
 
   end subroutine kappa_to_mesh
 
@@ -339,14 +379,22 @@ contains
     call cou_pot(ptot(:,:,:),max_l,num_alpha,poly_order,alpha,problemsize,&
         &num_mesh_points,abcissa,cpot)
 
+#ifdef _OPENACC
+    !$ACC KERNELS
+#else
     !$OMP PARALLEL DO PRIVATE(ii)
+#endif
     do ii=1,num_mesh_points
 
       vtot(1,ii)=-real(nuc,dp)/abcissa(ii)+cpot(ii)+vxc(ii,1)
       vtot(2,ii)=-real(nuc,dp)/abcissa(ii)+cpot(ii)+vxc(ii,2)
 
     end do
+#ifdef _OPENACC
+    !$ACC END KERNELS
+#else
     !$OMP END PARALLEL DO
+#endif
 
     deallocate(cpot)
     deallocate(ptot)

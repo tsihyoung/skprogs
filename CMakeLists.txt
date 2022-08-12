@@ -19,6 +19,7 @@ endif()
 
 #################### External dependencies ####################
 
+#set(CMAKE_FIND_DEBUG_MODE 1)
 find_package(Libxc QUIET)
 if (NOT Libxc_FOUND)
   message(STATUS "Libxc: No CMake export file found, trying to find with pkg-config")

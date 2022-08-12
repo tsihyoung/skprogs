@@ -37,7 +37,11 @@ contains
     temp=pi/real(N+1,dp)
     dz = temp
     !    
+#ifdef _OPENACC
+    !$ACC KERNELS
+#else
     !$OMP PARALLEL DO PRIVATE(ii,zz,cosz,cosz2,sinz)
+#endif
     do ii=1,N
       zz = dz * real(ii, dp)
       cosz = cos(zz)
@@ -45,6 +49,14 @@ contains
       sinz = sqrt(1.0_dp - cosz2)
       ! NOTE prefactor 
       x(ii)=(-1.0_dp) * cosz ! gauss-chebyshev abcissas
+#ifdef _OPENACC
+      r(ii)= (1.0_dp + x(ii)) / (1.0_dp - x(ii))
+      dzdr(ii) = (1.0_dp + cosz)**2 / (2.0_dp * sinz)
+      d2zdr2(ii) = ((2.0_dp + cosz - cosz2) * (1.0_dp + cosz)**2) &
+          &/ (4.0_dp * (-1.0_dp + cosz) * sinz)
+      w(ii)=temp*(sin(real(ii,dp)*temp))
+      fak(ii)=2.0_dp/(1.0_dp-x(ii))**2
+#else
       r(ii)= (1.0_dp + x(ii)) / (1.0_dp - x(ii)) * bragg(nuc)
       !dzdr(ii) = (1.0_dp + 2.0_dp * cos(zz) + cos(zz)**2) &
       !    &/ (2.0_dp * bragg(nuc) * sin(zz))
@@ -56,11 +68,16 @@ contains
       w(ii)=temp*(sin(real(ii,dp)*temp))
       !      fak(ii)=2.0_dp*r(ii)**2*bragg(nuc)/(1.0_dp-x(ii))**2
       fak(ii)=2.0_dp*bragg(nuc)/(1.0_dp-x(ii))**2
+#endif
 
       ! put fak into weight
       w(ii)=w(ii)*fak(ii)
     end do
+#ifdef _OPENACC
+    !$ACC END KERNELS
+#else
     !$OMP END PARALLEL DO
+#endif
 
     deallocate(x) 
     deallocate(fak) 
@@ -83,15 +100,27 @@ contains
 
     step=pi/real(N+1,dp)
 
+#ifdef _OPENACC
+    !$ACC KERNELS
+#else
     !$OMP PARALLEL DO PRIVATE(ii)
+#endif
     do ii=1,N
 
       ! NOTE prefactor 
       x(ii)=(-1.0_dp)*cos(step*real(ii,dp)) ! gauss-chebyshev abcissas
+#ifdef _OPENACC
+      r(ii)=(1.0_dp+x(ii))/(1.0_dp-x(ii))
+#else
       r(ii)=(1.0_dp+x(ii))/(1.0_dp-x(ii))*bragg(nuc)
+#endif
 
     end do
+#ifdef _OPENACC
+    !$ACC END KERNELS
+#else
     !$OMP END PARALLEL DO
+#endif
 
     deallocate(x) 
 
@@ -109,14 +138,27 @@ contains
 
     step=pi/real(N+1,dp)
 
+#ifdef _OPENACC
+    !$ACC KERNELS
+#else
     !$OMP PARALLEL DO PRIVATE(ii)
+#endif
     do ii=1,N
 
+#ifdef _OPENACC
+      dr(ii)=2.0d0*pi*sin(step*real(ii,dp))/&
+          &(1.0d0+2.0d0*cos(step*real(ii,dp))+cos(step*real(ii,dp))**2)
+#else
       dr(ii)=2.0d0*bragg(nuc)*pi*sin(step*real(ii,dp))/&
           &(1.0d0+2.0d0*cos(step*real(ii,dp))+cos(step*real(ii,dp))**2)
+#endif
 
     end do
+#ifdef _OPENACC
+    !$ACC END KERNELS
+#else
     !$OMP END PARALLEL DO
+#endif
 
   end subroutine get_abcissas_z_1st
 
@@ -132,14 +174,27 @@ contains
 
     step=pi/real(N+1,dp)
 
+#ifdef _OPENACC
+    !$ACC KERNELS
+#else
     !$OMP PARALLEL DO PRIVATE(ii)
+#endif
     do ii=1,N
 
+#ifdef _OPENACC
+      ddr(ii)=(-2.0d0*pi**2)*(cos(step*real(ii,dp))-2.0d0)/&
+          &(1.0d0+2.0d0*cos(step*real(ii,dp))+cos(step*real(ii,dp))**2)
+#else
       ddr(ii)=(-2.0d0*bragg(nuc)*pi**2)*(cos(step*real(ii,dp))-2.0d0)/&
           &(1.0d0+2.0d0*cos(step*real(ii,dp))+cos(step*real(ii,dp))**2)
+#endif
 
     end do
+#ifdef _OPENACC
+    !$ACC END KERNELS
+#else
     !$OMP END PARALLEL DO
+#endif
 
   end subroutine get_abcissas_z_2nd
 
