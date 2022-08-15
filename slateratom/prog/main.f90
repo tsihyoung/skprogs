@@ -16,6 +16,7 @@ program HFAtom
   use utilities
   use zora_routines
   use cmdargs
+  use iso_fortran_env, only: error_unit
   implicit none
 
   integer :: iter
@@ -159,6 +160,11 @@ program HFAtom
     write(*,*) ' '
 
   end do
+
+  if (.not. final) then
+    write(error_unit,'(A)') 'SCC not converged'
+    call abort
+  end if
 
 ! output
 

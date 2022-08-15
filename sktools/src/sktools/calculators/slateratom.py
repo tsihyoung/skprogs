@@ -243,10 +243,14 @@ class SlateratomCalculation:
         fpin = open(os.path.join(self._workdir, INPUT_FILE), "r")
         fpout = open(os.path.join(self._workdir, STDOUT_FILE), "w")
         proc = subproc.Popen([ self._binary ], cwd=self._workdir,
-                             stdin=fpin, stdout=fpout, stderr=subproc.STDOUT)
+                             stdin=fpin, stdout=fpout, stderr=subproc.PIPE)
         proc.wait()
         fpin.close()
         fpout.close()
+        _, err = proc.communicate()
+        if err:
+            atom = self._workdir.split("/")[1].capitalize()
+            raise sc.SkgenException(err.decode()[:-1] + " : " + atom)
 
 
 class SlateratomResult:
@@ -402,6 +406,8 @@ class SlateratomResult:
         wavefile = os.path.join(self._workdir, wavefile)
         if not os.path.exists(wavefile):
             raise sc.SkgenException("Missing wave function file " + wavefile)
+        proc = subproc.Popen(['sed', "-i", "-E", "s/([0-9])([+-])/\\1E\\2/g", wavefile])
+        proc.wait()
         fp = open(wavefile, "r")
         fp.readline()
         fp.readline()
